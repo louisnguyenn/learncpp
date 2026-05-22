@@ -2,20 +2,20 @@
 #include <utility>
 
 // struct
-template <typename T=int, typename U=int, typename K=int>
+template <typename T>
 struct Triad
 {
     T first{};
-    U second{};
-    K third{};
+    T second{};
+    T third{};
 };
 
 // deduction guide
-template <typename T=int, typename U=int, typename K=int>
-Triad(T, U, K) -> Triad<T, U, K>;
+template <typename T>
+Triad(T, T, T) -> Triad<T>;
 
 template <typename T>
-void print(T t)
+void print(T &t)
 {
     std::cout << "[" << t.first << ", " << t.second << ", " << t.third << "]";
 }
