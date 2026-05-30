@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace WordList
 {
@@ -18,21 +19,40 @@ class Session
 {
   private:
     std::string m_word{WordList::generateWord(WordList::words)};
+    std::vector<char> m_letters_guessed{};
+    std::vector<char> m_game_state{};
 
   public:
+    // constructor
+    Session() : m_game_state(m_word.size(), '_')
+    {
+    }
+
+    // get word
     std::string_view getWord()
     {
         return m_word;
     }
 
+    void intro()
+    {
+        std::cout << "Welcome to C++man (a variant of Hangman)" << '\n';
+        std::cout << "To win: guess the word. To lose: run out of pluses.\n\n";
+    }
+
     void display()
     {
         std::cout << "The word: ";
-
-        for (std::size_t i; i <= m_word.size(); i++)
+        for (char e : m_game_state)
         {
-            std::cout << "_";
+            std::cout << e;
         }
+        std::cout << '\n';
+    }
+
+    void updateGameState(char letter, std::size_t index)
+    {
+        m_game_state[index] = letter;
     }
 
     char userInput()
@@ -57,8 +77,50 @@ class Session
                 continue;
             }
 
+            for (char e : m_letters_guessed)
+            {
+                if (e == letter)
+                {
+                    std::cout << "You already guessed that. Try again.\n";
+                    break;
+                }
+            }
+
             return letter;
         }
+    }
+
+    void letterInWord(char letter)
+    {
+        int found{0};
+
+        for (std::size_t i{0}; i < m_word.size(); i++)
+        {
+            if (letter == m_word[i])
+            {
+                updateGameState(letter, i);
+                found = 1;
+            }
+        }
+
+        if (found == 0)
+        {
+            // TODO: handle this case
+        }
+    }
+
+    bool foundAllLetters()
+    {
+        // convert vector to a string
+        std::string m_game_state_str(m_game_state.begin(), m_game_state.end());
+
+        if (m_game_state_str == m_word)
+        {
+            return true;
+        }
+
+        // std::cout << "test";
+        return false;
     }
 };
 
@@ -67,14 +129,16 @@ int main()
     Session session;
     char letter;
 
-    std::cout << "Welcome to C++man (a variant of Hangman)" << '\n';
-    std::cout << "To win: guess the word. To lose: run out of pluses.\n\n";
-    // std::cout << "The word is: " << session.getWord() << '\n';
-
+    session.intro();
+    std::cout << "The word is: " << session.getWord() << '\n';
     session.display();
-    std::cout << '\n';
 
-    session.userInput();
+    while (session.foundAllLetters() == false)
+    {
+        letter = session.userInput();
+        session.letterInWord(letter);
+        session.display();
+    }
 
     return 0;
 }
