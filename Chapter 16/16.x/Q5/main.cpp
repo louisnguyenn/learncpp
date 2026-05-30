@@ -21,10 +21,11 @@ class Session
     std::string m_word{WordList::generateWord(WordList::words)};
     std::vector<char> m_letters_guessed{};
     std::vector<char> m_game_state{};
+    std::vector<char> m_wrong_guesses{};
 
   public:
     // constructor
-    Session() : m_game_state(m_word.size(), '_')
+    Session() : m_game_state(m_word.size(), '_'), m_wrong_guesses(6, '+')
     {
     }
 
@@ -47,6 +48,13 @@ class Session
         {
             std::cout << e;
         }
+
+        std::cout << "    Wrong guesses ";
+        for (char e : m_wrong_guesses)
+        {
+            std::cout << e;
+        }
+
         std::cout << '\n';
     }
 
@@ -57,6 +65,8 @@ class Session
 
     char userInput()
     {
+        bool guess_flag = false;
+
         while (true)
         {
             char letter;
@@ -82,9 +92,17 @@ class Session
                 if (e == letter)
                 {
                     std::cout << "You already guessed that. Try again.\n";
-                    break;
+                    guess_flag = true;
+                    continue;
                 }
             }
+
+            if (guess_flag == false)
+            {
+                m_letters_guessed.push_back(letter);
+            }
+
+            std::cout << '\n';
 
             return letter;
         }
@@ -92,20 +110,21 @@ class Session
 
     void letterInWord(char letter)
     {
-        int found{0};
+        int found{0}; // 0 = not found, 1 = found
 
         for (std::size_t i{0}; i < m_word.size(); i++)
         {
             if (letter == m_word[i])
             {
-                updateGameState(letter, i);
                 found = 1;
+                std::cout << "Yes, '" << letter << "' is in the word!\n";
+                updateGameState(letter, i);
             }
         }
 
         if (found == 0)
         {
-            // TODO: handle this case
+            wrongGuesses(letter);
         }
     }
 
@@ -119,8 +138,36 @@ class Session
             return true;
         }
 
-        // std::cout << "test";
         return false;
+    }
+
+    void wrongGuesses(char letter)
+    {
+        static std::size_t index{m_wrong_guesses.size() - 1};
+        static int count_wrong_guesses{0};
+
+        if (count_wrong_guesses == 5)
+        {
+            youLose();
+            return;
+        }
+
+        std::cout << "No, '" << letter << "' is not in the word!\n";
+
+        m_wrong_guesses[index] = letter;
+        index--;
+        count_wrong_guesses++;
+    }
+
+    void youWin()
+    {
+        std::cout << "You win!\n";
+    }
+
+    void youLose()
+    {
+        std::cout << "You lost! The word was: " << m_word << '\n';
+        exit(1);
     }
 };
 
@@ -138,6 +185,15 @@ int main()
         letter = session.userInput();
         session.letterInWord(letter);
         session.display();
+    }
+
+    if (session.foundAllLetters() == true)
+    {
+        session.youWin();
+    }
+    else
+    {
+        session.youLose();
     }
 
     return 0;
