@@ -28,7 +28,7 @@ class Player
     int m_gold{};
 
   public:
-    Player(std::string_view name) : m_name{name}, m_gold{Random::get(0, 100)}
+    Player(std::string_view name) : m_name{name}, m_gold{Random::get(80, 120)}
     {
     }
 
@@ -47,17 +47,25 @@ class Player
     {
         return m_inventory;
     }
-};
 
-void shop()
-{
-    std::cout << "Here is our selection for today:\n";
-
-    for (auto potion : Potion::types)
+    bool spendGold(int amount)
     {
-        std::cout << potion << ") " << Potion::name[potion] << " costs " << Potion::cost[potion] << '\n';
+        if (amount > m_gold)
+        {
+            std::cout << "You don't have enough gold.\n";
+            return false;
+        }
+
+        m_gold -= amount;
+
+        return true;
     }
-}
+
+    void addPotion(Potion::Type type)
+    {
+        m_inventory[type]++;
+    }
+};
 
 Player createPlayer()
 {
@@ -70,23 +78,80 @@ Player createPlayer()
     return player;
 }
 
+void printInventory(Player &player)
+{
+    std::cout << player.getName() << "'s Inventory:\n";
+    for (auto type : player.getInventory())
+    {
+        std::cout << Potion::name[type] << '\n';
+    }
+}
+
+void goodbye()
+{
+    std::cout << "\nThanks for shopping at Roscoe's potion emporium!\n";
+    std::exit(0);
+}
+
+void purchasePotion(Player &player)
+{
+    int potion_number{};
+
+    std::cout << "Enter a potion number to purchase: ";
+    std::cin >> potion_number;
+
+    if (potion_number == 9)
+    {
+        printInventory(player);
+        goodbye();
+    }
+
+    for (auto type : Potion::types)
+    {
+        if (potion_number == type)
+        {
+            int cost{Potion::cost[type]};
+
+            if (player.spendGold(cost))
+            {
+                player.addPotion(type);
+                std::cout << "You purchased a " << Potion::name[type] << "!\n";
+                std::cout << "You have " << player.getGold() << " gold remaining!\n\n";
+            }
+        }
+    }
+}
+
+void shop(Player &player)
+{
+    while (true)
+    {
+        std::cout << "Here is our selection for today:\n";
+
+        for (auto potion : Potion::types)
+        {
+            std::cout << potion << ") " << Potion::name[potion] << " costs " << Potion::cost[potion] << '\n';
+        }
+
+        std::cout << "9) exit\n\n";
+
+        purchasePotion(player);
+    }
+}
+
 void introductory()
 {
     std::cout << "Welcome to Roscoe's potion emporium!\n";
     Player player = createPlayer();
 
     std::cout << "Hello, " << player.getName() << ", you have " << player.getGold() << " gold.\n\n";
-}
 
-void goodbye()
-{
-    std::cout << "\nThanks for shopping at Roscoe's potion emporium!\n";
+    shop(player);
 }
 
 int main()
 {
     introductory();
-    shop();
     goodbye();
 
     return 0;
